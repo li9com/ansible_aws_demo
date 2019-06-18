@@ -7,15 +7,15 @@
           "created_at": "06/17/2019"
       },
       "initiator": {
-          "email": "dmadm2008@gmail.com",
-          "first_name": "Dmitrii",
-          "last_name": "Mostovshchikov"
+          "email": "examiner@example.com",
+          "first_name": "John",
+          "last_name": "Snow"
       },
       "participant": {
-          "email": "dmostovs@li9.com",
-          "first_name": "Dmitrii",
-          "last_name": "Mostovshchikov",
-          "ref_id": "0001"
+          "email": "aria@winterfell.got",
+          "first_name": "Aria",
+          "last_name": "Stark",
+          "ref_id": ""
       },
       "exam": {
           "name": "linux",
@@ -36,8 +36,7 @@
                   }
               ]
           }
-        }
-     }
+      }
+    }
   }
 ]
-
