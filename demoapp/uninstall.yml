@@ -1,0 +1,14 @@
+---
+- name: Load external variables from a file
+  include_vars:
+    file: demoapp_ansible_vars.yml
+
+
+- name: Uninstall Backend
+  block:
+    - name: Uninstall backend
+      include_tasks: uninstall_backend.yml
+  vars:
+    # trailing slash is mandatory
+    base_dir: "../demoapp/"
+

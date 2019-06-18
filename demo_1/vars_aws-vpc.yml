@@ -1,0 +1,117 @@
+---
+
+## Network variables
+ec2_stack_name: "Example-DemoVPC"
+ec2_region: us-east-1
+ec2_subnet_cidr: 10.0.0.0/24
+instance_state: present
+
+
+availability_zones:
+ - { name: a, subnet_cidr: 10.0.1.0/24 }
+ - { name: b, subnet_cidr: 10.0.2.0/24 }
+
+vpc:
+  region: "{{ ec2_region }}"
+  stack_name: "{{ ec2_stack_name }}"
+  tags:
+    created: "Ansible"
+    purpose: "Demo"
+    Name: "{{ ec2_stack_name }}"
+  load_balancer:
+      name: "{{ ec2_stack_name }}-demoapp"
+      tags:
+        appname: "ExampleDemoELB"
+        created: "Ansible"
+        purpose: "Demo"
+      listeners:
+        - Protocol: HTTP
+          Port: 80
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ ec2_stack_name }}-DemoApp"
+      target_group:
+        name: "{{ ec2_stack_name }}-DemoApp"
+        protocol: http
+        port: 80
+        health_check_protocol: http
+        health_check_path: /
+        health_check_port: 80
+        successfull_response_codes: "200,250-260"
+        tags:
+          appname: "ExampleDemoApp"
+          created: "Ansible"
+          purpose: "Demo"
+  network:
+    cidr: 10.0.0.0/16
+    subnets:
+
+    - cidr: "{{ availability_zones[0].subnet_cidr }}"
+      availability_zone: "{{ ec2_region }}{{ availability_zones[0].name }}"
+      public: true
+      tags:
+        Name:  "{{ ec2_stack_name }}-subnet-{{ ec2_region }}{{ availability_zones[0].name }}"
+        created: "Ansible"
+        purpose: "Demo"
+        appName: "ExampleDemoApp"
+    - cidr: "{{ availability_zones[1].subnet_cidr }}"
+      availability_zone: "{{ ec2_region }}{{ availability_zones[1].name }}"
+      public: true
+      tags:
+        Name:  "{{ ec2_stack_name }}-subnet-{{ ec2_region }}{{ availability_zones[1].name }}"
+        created: "Ansible"
+        purpose: "Demo"
+        appName: "ExampleDemoApp"
+
+    security_group:
+        name: "{{ ec2_region }}-public-access"
+        description: "{{ ec2_region }}-secgroup"
+        tags:
+          Name: "{{ ec2_stack_name }}-DemoApp"
+          created: "Ansible"
+          purpose: "Demo"
+          appName: "ExampleDemoApp"
+        rules:
+          - proto: tcp
+            ports: [ 22, 80, 443 ]
+            cidr_ip: 0.0.0.0/0
+            rule_desc: "Allow SSH and HTTP/HTTPS ports from everywhere"
+          - proto: all
+            ports: [ 1-65535, ]
+            cidr_ip: 10.0.0.0/16
+            rule_desc: "Allow all ports within a subnet"
+
+  internet_gateway:
+    tags:
+      Name: "{{ ec2_stack_name }}-Internet-GW"
+      created: "Ansible"
+      purpose: "Demo"
+  public_subnet_routing_table:
+    tags:
+      Name: "{{ ec2_stack_name }}-public"
+      created: "Ansible"
+      purpose: "Demo"
+
+
+
+## EC2 variables
+ec2_image_name: "centos-7-base-2018-08-02-030851"
+ec2_instance_count_per_zone: 1
+ec2_keypair_name: "dmostov2macbookpro17"
+ec2_instance_type: t2.micro
+ec2_instance_name: "ExampleDemoEC2Instance"
+ec2_instance_tag_appname: "ExampleDemoAppInstance"
+# Place "ec2_instance_count_per_zone" number of instances per each zone
+ec2_instances_avalability_zones:
+  - "{{ vpc.region }}a"
+  - "{{ vpc.region }}b"
+
+ec2_user_data: |
+  #!/bin/bash
+  yum install -y epel-release
+  yum install -y nginx
+  systemctl enable nginx
+  systemctl start nginx
+  systemctl disable firewalld
+  systemctl stop firewalld
+

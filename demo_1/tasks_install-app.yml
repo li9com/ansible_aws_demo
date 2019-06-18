@@ -1,0 +1,45 @@
+---
+#
+# The tasks include a playbook which installs the demo application
+# The playbook needs only one variable
+# do=install - to install the app
+# do=uninstall - to uninstall the app
+#
+
+
+## Perform the orchestration when do=install provided
+- name: Deploy Application
+  vars:
+    install_app_tasks_playbook: "../demoapp/install.yml"
+  block:
+
+    - import_tasks: "{{ install_app_tasks_playbook }}"
+    - meta: end_play
+
+  rescue:
+
+    - name: Do any actions here
+      debug:
+        msg: |
+          Something went wrong. The deployment did not finish.
+          Performing cleaning up allocated resources.
+
+    ## If something went wrong do cleaning up
+    - import_tasks: "{{ install_app_tasks_playbook }}"
+    - meta: end_play
+
+  when:
+    - do in [ "install", ]
+
+
+
+
+## Perform the clean up all resources when do=uninstall provided
+- name: Uninstall a deployed application
+  block:
+
+    - import_tasks: "{{ install_app_tasks_playbook }}"
+
+  when:
+    - do in [ "uninstall", ]
+

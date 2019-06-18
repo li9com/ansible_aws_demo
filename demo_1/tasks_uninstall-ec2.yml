@@ -1,0 +1,33 @@
+---
+- name: Search needed needed instances
+  ec2_instance_facts:
+    region: "{{ vpc.region }}"
+    filters:
+      "tag:appName": "{{ ec2_instance_tag_appname }}"
+  register: ec2_instances
+
+
+- name: Extract instance_id attributes into a list from found metadata of instances
+  set_fact:
+    instance_ids: "{{ ec2_instances.instances | map(attribute='instance_id') | list }}"
+
+
+- name: Display found instance_ids
+  debug:
+    var: instance_ids
+
+
+- name: Delete the found EC2 instances
+  ec2:
+    instance_ids: "{{ instance_ids }}"
+    region: "{{ vpc.region }}"
+    state: absent
+    wait: true
+  register: ec2_instances
+
+
+- name: Wait for 15 seconds to disassociate network interfaces from the removed EC2 instances
+  wait_for:
+    timeout: 15
+  when: ec2_instances is changed
+

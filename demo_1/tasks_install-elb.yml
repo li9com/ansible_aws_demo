@@ -1,0 +1,56 @@
+---
+- name: Get a list of existing EC2 instances by a tag
+  ec2_instance_facts:
+    filters:
+      "tag:appName": "{{ ec2_instance_tag_appname }}"
+      "instance-state-name": "running"
+  register: ec2_instances
+
+
+- name: Get a list of subnets
+  ec2_vpc_subnet_facts:
+    filters:
+      "tag:appName": "{{ vpc.network.subnets[0].tags.appName }}"
+  register: vpc_subnets
+
+
+- name: Create a target group
+  elb_target_group:
+    name: "{{ vpc.load_balancer.target_group.name }}"
+    protocol: "{{ vpc.load_balancer.target_group.protocol }}"
+    port: "{{ vpc.load_balancer.target_group.port }}"
+    vpc_id: "{{ vpc_subnets.subnets[0].vpc_id }}"
+    health_check_protocol: "{{ vpc.load_balancer.target_group.health_check_protocol }}"
+    health_check_port: "{{ vpc.load_balancer.target_group.health_check_port }}"
+    health_check_path: "{{ vpc.load_balancer.target_group.health_check_path }}"
+    successful_response_codes: "{{ vpc.load_balancer.target_group.successfull_response_codes }}"
+    target_type: instance
+    targets: |
+      [
+        {% for id in ec2_instances.instances | map(attribute='instance_id') | list %}
+        {
+          "Id": "{{ id }}",
+          "Port": {{ vpc.load_balancer.target_group.port | int }},
+        }{%- if not loop.last -%},{%- endif %}
+        {% endfor %}
+      ]
+    state: "present"
+    tags: "{{ vpc.load_balancer.target_group.tags }}"
+  register: target_group
+
+
+- name: Set up an Application Load Balancer
+  elb_application_lb:
+    listeners: "{{ vpc.load_balancer.listeners }}"
+    # cross_zone_load_balancing: true
+    name: "{{ vpc.load_balancer.name }}"
+    purge_listeners: true
+    purge_tags: true
+    region: "{{ vpc.region }}"
+    scheme: "internet-facing"
+    state: "present"
+    subnets: "{{ vpc_subnets.subnets | map(attribute='subnet_id') | list }}"
+    tags: "{{ vpc.load_balancer.tags }}"
+    security_groups: "{{ vpc.network.security_group.name }}"
+    wait: true
+

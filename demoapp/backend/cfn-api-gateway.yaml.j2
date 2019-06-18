@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "{{ aws_api_gateway.desc }}"
+
+# Parameters:
+
+Resources:
+
+  ApiGatewayRestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      # Name: "{{ aws_api_gateway.name }}"
+      Name: "Exams"
+      Description: "{{ aws_api_gateway.desc }}"
+      Body:
+        ### SWAGGER_START !!! DO NOT ALTER THIS LINE !!!
+        swagger: '2.0'
+        info:
+          version: '2019-06-17T00:34:36Z'
+          title: {{ aws_api_gateway.app_name }}
+        basePath: "{{ aws_api_gateway.base_path }}"
+        schemes:
+        - https
+        paths:
+          "/exam":
+{% for lambda in lambda_funcs %}
+{% if lambda.method | upper in aws_api_gateway.implemented_methods %}
+            {{ lambda.method | lower }}:
+              produces:
+              - application/json
+              responses:
+                '200':
+                  description: 200 response
+                  schema:
+                    "$ref": "#/definitions/Empty"
+              x-amazon-apigateway-integration:
+                uri: "arn:aws:apigateway:{{ aws_region }}:lambda:path/2015-03-31/functions/{{ lambda.arn }}/invocations"
+                responses:
+                  default:
+                    statusCode: '200'
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                contentHandling: CONVERT_TO_TEXT
+                type: aws_proxy
+{% endif %}
+{% endfor %}
+        definitions:
+          Empty:
+            type: object
+            title: Empty Schema
+        ### SWAGGER_END !!! DO NOT ALTER THIS LINE !!!
+
+
+  ApiGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: ApiGatewayRestApi
+
+  ApiGatewayStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      StageName: latest
+      Description: latest stage
+      RestApiId:
+        Ref: ApiGatewayRestApi
+      DeploymentId:
+        Ref: ApiGatewayDeployment
+
+Outputs:
+  APIStageName:
+    Value: !Ref ApiGatewayStage
+  APIGatewayID:
+    Value: !Ref ApiGatewayRestApi
+  APIEndPointConfiguration:
+    Value: !GetAtt ApiGatewayRestApi.RootResourceId
+  APIEndPointURL:
+    Value:
+      !Join
+        - "/"
+        - - "https:/"
+          - !Join
+            - "."
+            - - !Ref ApiGatewayRestApi
+              - "execute-api.{{ aws_region }}.amazonaws.com"
+          - "{{ aws_api_gateway.stage_name }}"
+          - "{{ aws_api_gateway.base_path }}"
+

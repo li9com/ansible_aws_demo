@@ -1,0 +1,47 @@
+---
+## Perform the orchestration when do=install provided
+- name: Deploy Infra
+  block:
+
+  - import_tasks: tasks_install-network.yml
+  - import_tasks: tasks_install-ec2.yml
+  - import_tasks: tasks_install-elb.yml
+  - import_tasks: tasks_install-summary.yml
+    tags:
+      - summary
+
+  ## stop processing since we done all needed tasks
+  ## within the specified action
+  - meta: end_play
+
+  rescue:
+  - name: Informing about the deployment failure
+    debug:
+      msg: |
+        Something went wrong. The deployment did not finish.
+        Performing cleaning up allocated resources.
+
+  ## If something went wrong do cleaning up
+  - import_tasks: tasks_uninstall-elb.yml
+  - import_tasks: tasks_uninstall-ec2.yml
+  - import_tasks: tasks_uninstall-network.yml
+
+  ## stop processing since we done all needed tasks
+  ## within the specified action
+  - meta: end_play
+
+  when:
+    - do in [ "install", ]
+
+
+## Perform the clean up all resources when do=uninstall provided
+- name: Uninstall the existing infrastructure
+  block:
+
+  - import_tasks: tasks_uninstall-elb.yml
+  - import_tasks: tasks_uninstall-ec2.yml
+  - import_tasks: tasks_uninstall-network.yml
+
+  when:
+    - do in [ "uninstall", ]
+

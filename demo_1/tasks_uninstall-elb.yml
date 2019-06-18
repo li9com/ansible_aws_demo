@@ -1,0 +1,28 @@
+---
+- name: Delete Load Balancer
+  elb_application_lb:
+    region: "{{ vpc.region }}"
+    name: "{{ vpc.load_balancer.name }}"
+    state: absent
+    listeners: "{{ vpc.load_balancer.listeners }}"
+
+
+- name: Do the deletion two times (failed at 1st time)
+  block:
+
+    - name: Delete a target group (1st attempt)
+      elb_target_group:
+        name: "{{ vpc.load_balancer.target_group.name }}"
+        state: absent
+
+  rescue:
+
+    - name: Wait a while
+      wait_for:
+        timeout: 15
+
+    - name: Delete a target group (2nd attempt)
+      elb_target_group:
+        name: "{{ vpc.load_balancer.target_group.name }}"
+        state: absent
+

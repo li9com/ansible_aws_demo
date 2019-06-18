@@ -1,0 +1,7 @@
+{
+  "get_item": "https://81c3fgjht6.execute-api.us-east-1.amazonaws.com/latest/exam",
+  "add_item": "https://",
+  "del_item": "https://",
+  "mod_item": "https://"
+}
+

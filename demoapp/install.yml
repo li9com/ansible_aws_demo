@@ -1,0 +1,14 @@
+---
+- name: Load external variables from a file
+  include_vars:
+    file: demoapp_ansible_vars.yml
+
+
+- name: Install Backend
+  block:
+    - name: Install backend
+      include_tasks: install_backend.yml
+  vars:
+    # trailing slash is mandatory
+    base_dir: "../demoapp/"
+

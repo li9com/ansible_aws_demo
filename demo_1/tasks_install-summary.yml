@@ -1,0 +1,42 @@
+---
+- name: Get info about Load Balancers
+  elb_application_lb_facts:
+    region: "{{ vpc.region }}"
+    names: "{{ vpc.load_balancer.name }}"
+  register: load_balancers
+
+
+- name: Get a list of existing EC2 instances
+  ec2_instance_facts:
+    filters:
+      "tag:appName": "{{ ec2_instance_tag_appname }}"
+      "instance-state-name": "running"
+  register: ec2_instances
+
+
+- name: Display summary info
+  debug:
+    msg: |
+
+      {% if load_balancers.load_balancers | length %}
+      You can access your application by this link:
+        (wait for a while until the endpoint becomes available)
+        http://{{ load_balancers.load_balancers[0].dns_name }}
+      {% else %}
+      There are no Load balancers configured.
+      {% endif %}
+
+      {% if ec2_instances.instances | length %}
+      EC2 instances (accessed by ssh):
+      {% for ec2 in ec2_instances.instances %}
+        - name: {{ ec2.tags.Name }}
+          state: {{ ec2.state.name }}
+          public DNS name: {{ ec2.public_dns_name }}
+          public IP address: {{ ec2.public_ip_address }}
+          private DNS name: {{ ec2.private_dns_name }}
+          private IP address: {{ ec2.private_ip_address }}
+      {% endfor %}
+      {% else %}
+      There are no EC2 instances available.
+      {% endif %}
+

@@ -1,0 +1,60 @@
+---
+- name: Deploy/Undeploy entire infrastructure + DemoApp
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  become: false
+  environment:
+    AWS_SECRET_KEY: "{{ aws_secret_key }}"
+    AWS_ACCESS_KEY: "{{ aws_access_key }}"
+
+  tasks:
+
+
+
+    - name: Check that "do" and "scope" are provided with proper values
+      assert:
+        that:
+          - do is defined
+          - do in [ 'install', 'uninstall' ]
+          - scope is defined
+          - scope in [ 'infra', 'app' ]
+        fail_msg: |
+          Specify an action to perform: do=install or do=uninstall,
+          and scope: scope=infra or scope=app
+        success_msg: "Checks passed"
+      tags:
+        - always
+
+
+    - name: Include neccessary var files
+      include_vars:
+        file: "vars_aws-vpc.yml"
+      tags:
+        - always
+
+
+    - name: Deploy/undeploy infra
+      block:
+
+        - name: Run infra-playbooks
+          import_tasks: tasks_install-infra.yml
+
+        - meta: end_play
+      when: scope == 'infra'
+
+
+
+
+    - name: Deploy/undeploy application
+      block:
+
+        - name: Run app-playbooks
+          import_tasks: tasks_install-app.yml
+          vars:
+            aws_region: "{{ vpc.region }}"
+            install_app_tasks_playbook: "../demoapp/install.yml"
+
+        - meta: end_play
+      when: scope == 'app'
+

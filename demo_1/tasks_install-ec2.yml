@@ -1,0 +1,69 @@
+---
+- name: Search an AMI image
+  ec2_ami_facts:
+    region: "{{ ec2_region }}"
+    filters:
+      name: "{{ ec2_image_name }}"
+  register: aws_facts
+
+
+- name: Checking that we found a needed image(s)
+  assert:
+    that:
+      - aws_facts.images | length > 0
+      - aws_facts.images[0].image_id | length > 0
+    success_msg: "A proper AMI image found. ami_id is {{ aws_facts.images[0].image_id }}"
+    fail_msg: "Not found AMI image by name {{ ec2_image_name }}"
+
+
+- name: Set image_id
+  set_fact:
+    image_id: "{{ aws_facts.images[0].image_id }}"
+
+
+- name: Check if we have a needed subnet
+  ec2_vpc_subnet_facts:
+    filters:
+      "tag:appName": "{{ vpc.network.subnets[0].tags.appName }}"
+  register: vpc_subnets
+
+
+- name: Checking that we have a needed subnet(s)
+  assert:
+    that:
+      - vpc_subnets.subnets | length == vpc.network.subnets | length
+    fail_msg: "Needed subnet(s) {{ vpc.network.subnets[0].tags.appName }} not found"
+    success_msg: "Needed subnets exist"
+
+
+- name: Run needed number of EC2 instances
+  ec2:
+    key_name: "{{ ec2_keypair_name }}"
+    volumes:
+      - device_name: /dev/sdb
+        volume_type: gp2
+        volume_size: 2
+        delete_on_termination: true
+      - device_name: /dev/sdc
+        volume_type: gp2
+        volume_size: 2
+        delete_on_termination: true
+    vpc_subnet_id: "{{ vpc_subnets | json_query(query) | join(',') }}"
+    instance_type: "{{ ec2_instance_type }}"
+    image: "{{ image_id }}"
+    group: "{{ vpc.network.security_group.name }}"
+    region: "{{ vpc.region }}"
+    exact_count: "{{ ec2_instance_count_per_zone }}"
+    count_tag:
+      Count: "{{ ec2_instance_name }}"
+    instance_tags:
+      Name: "{{ ec2_instance_name }}-{{ item }}"
+      Count: "{{ ec2_instance_name }}"
+      appName: "{{ ec2_instance_tag_appname }}"
+    ec2_zone: "{{ item }}"
+    user_data: "{{ ec2_user_data }}"
+    wait: true
+  vars:
+    query: subnets[?availability_zone=='{{ item }}'].subnet_id
+  loop: "{{ ec2_instances_avalability_zones }}"
+

@@ -1,0 +1,43 @@
+[
+  {
+    "token": "1000",
+    "data": {
+      "token": "1000",
+      "metadata": {
+          "created_at": "06/17/2019"
+      },
+      "initiator": {
+          "email": "dmadm2008@gmail.com",
+          "first_name": "Dmitrii",
+          "last_name": "Mostovshchikov"
+      },
+      "participant": {
+          "email": "dmostovs@li9.com",
+          "first_name": "Dmitrii",
+          "last_name": "Mostovshchikov",
+          "ref_id": "0001"
+      },
+      "exam": {
+          "name": "linux",
+          "allocated_time": "1h",
+          "status": "assigned",
+          "started_at": "01/01/1970",
+          "ended_at": "01/01/1970",
+          "tasks": {}
+      },
+      "deployment": {
+          "aws": {
+              "stack_name": "",
+              "instances": [
+                  {
+                      "ip": "",
+                      "username": "",
+                      "password": ""
+                  }
+              ]
+          }
+        }
+     }
+  }
+]
+

@@ -1,0 +1,71 @@
+---
+## Provisioning a network, VPC is being created automatically
+## or used one with the same name
+- name: Provisioning a VPC
+  ec2_vpc_net:
+    region: "{{ vpc.region }}"
+    cidr_block: "{{ vpc.network.cidr }}"
+    name: "{{ vpc.stack_name }}"
+    tags: "{{ vpc.tags }}"
+    state: present
+  register: vpc_network
+  tags:
+    - network
+
+
+- name: Display Network configuration
+  debug:
+    var: vpc_network.vpc.id
+
+
+- name: Make sure VPC subnet is here
+  ec2_vpc_subnet:
+    region: "{{ vpc.region }}"
+    cidr: "{{ item.cidr }}"
+    az: "{{ item.availability_zone }}"
+    vpc_id: "{{ vpc_network.vpc.id }}"
+    map_public: "{{ item.public }}"
+    resource_tags: "{{ item.tags }}"
+    wait: true
+    state: present
+  register: vpc_subnets
+  loop: "{{ vpc.network.subnets }}"
+  tags:
+    - subnet
+
+
+- name: Create a VPC Internet Gateway
+  ec2_vpc_igw:
+    region: "{{ vpc.region }}"
+    vpc_id: "{{ vpc_network.vpc.id }}"
+    tags: "{{ vpc.internet_gateway.tags }}"
+    state: present
+  register: vpc_igw
+  tags:
+    - internet_gateway
+
+
+- name: Create a public subnet route table (default gateway)
+  ec2_vpc_route_table:
+    region: "{{ vpc.region }}"
+    vpc_id: "{{ vpc_network.vpc.id }}"
+    tags: "{{ vpc.public_subnet_routing_table.tags }}"
+    subnets: "{{ vpc_subnets.results | map(attribute='subnet') | map(attribute='id') | list }}"
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ vpc_igw.gateway_id }}"
+    state: present
+
+
+- name: Create a VPC Security Group
+  ec2_group:
+    name: "{{ vpc.network.security_group.name }}"
+    region: "{{ vpc.region }}"
+    description: "{{ vpc.network.security_group.description }}"
+    vpc_id: "{{ vpc_network.vpc.id }}"
+    rules: "{{ vpc.network.security_group.rules }}"
+    state: present
+    tags: "{{ vpc.network.security_group.tags }}"
+  tags:
+    - security_group
+

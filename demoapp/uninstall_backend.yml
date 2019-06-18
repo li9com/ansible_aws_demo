@@ -1,0 +1,41 @@
+---
+- name: Delete a DynamoDB table "{{ dynamodb_table.name }}"
+  dynamodb_table:
+    name: "{{ dynamodb_table.name }}"
+    region: "{{ aws_region }}"
+    state: absent
+
+
+- name: Delete IAM role for Lambda with access to DynamoDB
+  iam_role:
+    name: "{{ iam_role.name }}"
+    state: absent
+
+
+- name: Delete Lambda function(s)
+  lambda:
+    state: absent
+    name: "{{ item.value.name }}"
+  loop: "{{ lookup('dict', aws_api_gateway.methods) }}"
+
+
+- name: Delete permissions to allow API Gateway
+  lambda_policy:
+    action: "lambda:InvokeFunction"
+    function_name: "{{ item.value.name }}"
+    principal: "apigateway.amazonaws.com"
+    statement_id: allow-api-gateway
+    state: absent
+  loop: "{{ lookup('dict', aws_api_gateway.methods) }}"
+
+
+- name: Delete API Gateway (using a cloudformation template)
+  vars:
+    lambda_funcs: "{{ lambda_data }}"
+  cloudformation:
+    capabilities:
+      - CAPABILITY_IAM
+    region: "{{ aws_region }}"
+    stack_name: "{{ aws_api_gateway.cfn_stack_name }}"
+    state: present
+

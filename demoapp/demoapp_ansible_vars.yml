@@ -1,0 +1,52 @@
+---
+
+dynamodb_table:
+  name: "Exams"
+
+iam_role:
+  name: "demoapp-iam-role"
+  iam_role:
+    name: "demoapp-iam-role"
+
+lambda_func_get_item: &lambda_get_item
+  name: "item_get"
+  description: "Demo (test) function to check my playbook"
+  local_source: "backend/item_get.py"
+  format: zip
+  runtime: python3.6
+  iam_role:
+  handler: item_get.item_get
+  tags:
+    appName: DemoApp
+    purpose: demo
+    action: get_item
+
+lambda_func_add_item: &lambda_add_item
+  name: "item_add"
+  description: "Adds an item into DynamoDB table"
+  local_source: "backend/item_add.py"
+  format: zip
+  runtime: python3.6
+  iam_role:
+  handler: item_add.item_add
+  tags:
+    appName: DemoApp
+    purpose: demo
+    action: add_item
+
+aws_api_gateway:
+  cfn_stack_name: DemoAPIGateway
+  name: "Exams"
+  app_name: "Exams"
+  region: "{{ aws_region }}"
+  desc: ""
+  base_path: "exam"
+  stage_name: "latest"
+  template: backend/cfn-api-gateway.yaml.j2
+  implemented_methods: [ 'GET', 'POST' ]
+  methods:
+    GET: *lambda_get_item
+    POST: *lambda_add_item
+#    PATCH: {}
+#    DELETE: {}
+
