@@ -1,6 +1,6 @@
 #!/bin/bash
 
-bin="python test_data.py -ie dmostovs@redhat.com"
+bin="python test_data.py -ie sender@example.com"
 send_to="-a send -ep https://o61bpqi1j9.execute-api.us-east-1.amazonaws.com/latest/exam"
 
 
