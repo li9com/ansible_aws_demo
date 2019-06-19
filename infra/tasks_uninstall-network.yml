@@ -1,6 +1,7 @@
 ---
 - name: Look up a needed VPC
   ec2_vpc_net_facts:
+    region: "{{ vpc.region }}"
     filters:
       "tag:Name": "{{ vpc.stack_name }}"
   register: found_vpcs
