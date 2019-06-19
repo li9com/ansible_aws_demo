@@ -1,6 +1,7 @@
 ---
 - name: Get a list of existing EC2 instances by a tag
   ec2_instance_facts:
+    region: "{{ vpc.region }}"
     filters:
       "tag:appName": "{{ ec2_instance_tag_appname }}"
       "instance-state-name": "running"
