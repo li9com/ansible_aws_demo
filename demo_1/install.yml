@@ -1,6 +1,6 @@
 ---
 - name: Deploy/Undeploy entire infrastructure + DemoApp
-  hosts: localhost
+  hosts: localhost,frontend
   gather_facts: false
   connection: local
   become: false
@@ -41,7 +41,9 @@
           import_tasks: tasks_install-infra.yml
 
         - meta: end_play
-      when: scope == 'infra'
+      when:
+        - inventory_hostname == 'localhost'
+        - scope == 'infra'
 
 
 
@@ -56,5 +58,6 @@
             install_app_tasks_playbook: "../demoapp/install.yml"
 
         - meta: end_play
-      when: scope == 'app'
+      when:
+        - scope == 'app'
 
