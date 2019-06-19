@@ -52,10 +52,9 @@
       block:
 
         - name: Run app-playbooks
-          import_tasks: tasks_install-app.yml
+          import_tasks: "../demoapp/install.yml"
           vars:
             aws_region: "{{ vpc.region }}"
-            install_app_tasks_playbook: "../demoapp/install.yml"
 
         - meta: end_play
       when:
