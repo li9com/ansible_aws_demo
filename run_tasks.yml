@@ -4,6 +4,7 @@
 ## Accepted variables:
 ## - tasks_dir - path to the tasks dir (default: demo_1)
 ## - tasks_file - file in the infra_tasks_dir (must be provided)
+## - infra_vars_file - file with variables for infra
 ##
 - name: Run tasks on localhost
   hosts: localhost
@@ -16,6 +17,7 @@
   vars:
     l_tasks_dir: "{{ tasks_dir | default('demo_1') }}"
     l_tasks_file: "{{ tasks_file }}"
+    l_infra_vars: "{{ infra_vars_file }}"
 
   tasks:
 
@@ -24,8 +26,15 @@
       assert:
         that:
           - tasks_file is defined
-        fail_msg: "Tasks file must be provided"
-        success_msg: "Provided tasks file is {{ l_tasks_file }}, tasks dir is {{ l_tasks_dir }}"
+          - infra_vars_file is defined
+        fail_msg: "Tasks file and Infra vars file must be provided"
+        success_msg: |
+          Provided tasks file is {{ l_tasks_file }}, tasks dir is {{ l_tasks_dir }}. Infra vars file is {{ l_infra_vars_file }}.
+
+
+    - name: Include infra vars
+      include_vars:
+        file: "{{ l_infra_vars }}"
 
 
     - name: Run tasks from the provided tasks_file
