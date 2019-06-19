@@ -1,0 +1,33 @@
+---
+##
+## The playbook runs provided tasks on localhost.
+## Accepted variables:
+## - tasks_dir - path to the tasks dir (default: demo_1)
+## - tasks_file - file in the infra_tasks_dir (must be provided)
+##
+- name: Run tasks on localhost
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  become: false
+  environment:
+    AWS_SECRET_KEY: "{{ aws_secret_key }}"
+    AWS_ACCESS_KEY: "{{ aws_access_key }}"
+  vars:
+    l_tasks_dir: "{{ tasks_dir | default('demo_1') }}"
+    l_tasks_file: "{{ tasks_file }}"
+
+  tasks:
+
+
+    - name: Check that the tasks_file is provided
+      assert:
+        that:
+          - tasks_file is defined
+        fail_msg: "Tasks file must be provided"
+        success_msg: "Provided tasks file is {{ l_tasks_file }}, tasks dir is {{ l_tasks_dir }}"
+
+
+    - name: Run tasks from the provided tasks_file
+      import_tasks: "{{ l_tasks_dir }}/{{ l_tasks_file }}"
+

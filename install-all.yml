@@ -29,7 +29,7 @@
 
     - name: Include neccessary var files
       include_vars:
-        file: "vars_aws-vpc.yml"
+        file: "infra/vars_aws-vpc.yml"
       tags:
         - always
 
@@ -38,7 +38,7 @@
       block:
 
         - name: Run infra-playbooks
-          import_tasks: tasks_install-infra.yml
+          import_tasks: infra/tasks_install-infra.yml
 
         - meta: end_play
       when:
@@ -52,7 +52,7 @@
       block:
 
         - name: Run app-playbooks
-          import_tasks: "../demoapp/install.yml"
+          import_tasks: "demoapp/install.yml"
           vars:
             aws_region: "{{ vpc.region }}"
 
