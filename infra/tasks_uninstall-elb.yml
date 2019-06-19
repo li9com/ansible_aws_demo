@@ -12,6 +12,7 @@
 
     - name: Delete a target group (1st attempt)
       elb_target_group:
+        region: "{{ vpc.region }}"
         name: "{{ vpc.load_balancer.target_group.name }}"
         state: absent
 
@@ -23,6 +24,7 @@
 
     - name: Delete a target group (2nd attempt)
       elb_target_group:
+        region: "{{ vpc.region }}"
         name: "{{ vpc.load_balancer.target_group.name }}"
         state: absent
 
