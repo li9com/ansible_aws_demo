@@ -23,6 +23,7 @@
 
 - name: Check if we have a needed subnet
   ec2_vpc_subnet_facts:
+    region: "{{ vpc.region }}"
     filters:
       "tag:appName": "{{ vpc.network.subnets[0].tags.appName }}"
   register: vpc_subnets
