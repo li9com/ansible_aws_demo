@@ -17,7 +17,7 @@
   vars:
     l_tasks_dir: "{{ tasks_dir | default('demo_1') }}"
     l_tasks_file: "{{ tasks_file }}"
-    l_infra_vars: "{{ infra_vars_file }}"
+    l_infra_vars_file: "{{ infra_vars_file }}"
 
   tasks:
 
@@ -34,7 +34,7 @@
 
     - name: Include infra vars
       include_vars:
-        file: "{{ l_infra_vars }}"
+        file: "{{ l_infra_vars_file }}"
 
 
     - name: Run tasks from the provided tasks_file
