@@ -1,0 +1,126 @@
+---
+#
+# Tasks install the backend application
+#
+
+- debug:
+    msg: "Hello"
+
+
+- meta: end_play
+
+- name: Create a DynamoDB table "{{ dynamodb_table.name }}"
+  dynamodb_table:
+    name: "{{ dynamodb_table.name }}"
+    region: "{{ aws_region }}"
+    hash_key_name: token
+    hash_key_type: STRING
+    tags:
+      appName: DemoApp
+      purpose: demo
+    read_capacity: 3
+    write_capacity: 3
+
+
+- name: Create IAM role for Lambda with access to DynamoDB
+  iam_role:
+    name: "{{ iam_role.name }}"
+    state: present
+    assume_role_policy_document:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ "lambda.amazonaws.com" ]
+          Action:
+            - sts:AssumeRole
+    managed_policy:
+      - CloudWatchLogsFullAccess
+      - AmazonDynamoDBFullAccess
+  register: created_role
+
+
+- name: Display attributes of the created iam role
+  debug:
+    var: created_role
+
+
+- name: Sleep for 15 seconds (to give the iam role the time on initialization)
+  wait_for:
+    timeout: 15
+
+
+- name: Archive Lambda
+  archive:
+    path: "{{ base_dir }}{{ item.value.local_source }}"
+    dest: "{{ base_dir }}{{ item.value.local_source }}.{{ item.value.format }}"
+    format: "{{ item.value.format }}"
+    force_archive: true
+  loop: "{{ lookup('dict', aws_api_gateway.methods) }}"
+  delegate_to: localhost
+
+
+- name: Upload Lambda function(s)
+  lambda:
+    state: present
+    name: "{{ item.value.name }}"
+    description: "{{ item.value.description }}"
+    zip_file: "{{ base_dir }}{{ item.value.local_source }}.{{ item.value.format }}"
+    runtime: "{{ item.value.runtime }}"
+    handler: "{{ item.value.handler }}"
+    role: "{{ created_role.iam_role.arn }}"
+    environment_variables:
+      aws_region: "{{ aws_region }}"
+      dynamodb_table: "{{ dynamodb_table.name }}"
+  register: l_functions
+  loop: "{{ lookup('dict', aws_api_gateway.methods) }}"
+
+
+- name: Extract the only needed info from installed lambda function(s)
+  set_fact:
+    lambda_data: |
+      {{ l_functions | json_query(query) }}
+  vars:
+    query: |
+      results[*].{
+        method: item.key,
+        arn: configuration.function_arn
+      }
+
+
+- name: Display some lambda facts
+  debug:
+    var: lambda_data
+
+
+- name: Create permissions to allow API Gateway
+  lambda_policy:
+    action: "lambda:InvokeFunction"
+    function_name: "{{ item.value.name }}"
+    principal: "apigateway.amazonaws.com"
+    statement_id: allow-api-gateway
+  loop: "{{ lookup('dict', aws_api_gateway.methods) }}"
+
+
+- name: Display defined methods
+  debug:
+    var: aws_api_gateway.methods.keys()
+
+
+- name: Create API Gateway (using a cloudformation template)
+  vars:
+    lambda_funcs: "{{ lambda_data }}"
+  cloudformation:
+    capabilities:
+      - CAPABILITY_IAM
+    region: "{{ aws_region }}"
+    stack_name: "{{ aws_api_gateway.cfn_stack_name }}"
+    state: present
+    template_body: "{{ lookup('template', '{{ aws_api_gateway.template }}') }}"
+  register: api_gateway
+
+
+- name: Display api_info
+  debug:
+    var: api_gateway.stack_outputs.APIEndPointURL
+

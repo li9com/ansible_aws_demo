@@ -32,16 +32,16 @@ The playbook can be run by following ways:
   `ansible-playbook install.yml -e do=install -e scope=infra`
 
   - install demo app:
-    `ansible-playbook install.yml -e do=install -e scope=app`
+    `ansible-playbook install.yml -e do=install -e scope=app --tags backend,frontend`
 
   - uninstall infra:
   `ansible-playbook install.yml -e do=uninstall -e scope=infra`
 
   - uninstall demo app:
-    `ansible-playbook install.yml -e do=uninstall -e scope=app`
+    `ansible-playbook install.yml -e do=uninstall -e scope=app --tags backend,frontend`
 
-  - additionally, you can get credentials to access the deployed infrastructure:
-    `ansible-playbook install.yml -e do=install -e scope=infra -t summary`
+  - additionally, you can get some details to access the deployed infrastructure:
+    `ansible-playbook install.yml -e do=install -e scope=infra --tags summary`
 
 
   In case if during process `do=install` an error happens, the playbook automatically runs `do=uninstall` actions.

@@ -1,6 +1,6 @@
 {
-  "get_item": "https://81c3fgjht6.execute-api.us-east-1.amazonaws.com/latest/exam",
-  "add_item": "https://",
+  "get_item": "https://o61bpqi1j9.execute-api.us-east-1.amazonaws.com/latest/exam",
+  "add_item": "https://o61bpqi1j9.execute-api.us-east-1.amazonaws.com/latest/exam",
   "del_item": "https://",
   "mod_item": "https://"
 }

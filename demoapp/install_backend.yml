@@ -41,6 +41,7 @@
 - name: Sleep for 15 seconds (to give the iam role the time on initialization)
   wait_for:
     timeout: 15
+  when: created_role is changed
 
 
 - name: Archive Lambda
