@@ -10,6 +10,7 @@
 
 - name: Get a list of subnets
   ec2_vpc_subnet_facts:
+    region: "{{ vpc.region }}"
     filters:
       "tag:appName": "{{ vpc.network.subnets[0].tags.appName }}"
   register: vpc_subnets
@@ -17,6 +18,7 @@
 
 - name: Create a target group
   elb_target_group:
+    region: "{{ vpc.region }}"
     name: "{{ vpc.load_balancer.target_group.name }}"
     protocol: "{{ vpc.load_balancer.target_group.protocol }}"
     port: "{{ vpc.load_balancer.target_group.port }}"
