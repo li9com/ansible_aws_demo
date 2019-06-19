@@ -6,6 +6,9 @@
 ## - tasks_file - file in the infra_tasks_dir (must be provided)
 ## - infra_vars_file - file with variables for infra
 ##
+## This playbook might be used as ad-hoc (for localhost only) or for any inventories
+## in Ansible Tower
+##
 - name: Run tasks on localhost
   hosts: localhost
   gather_facts: false
