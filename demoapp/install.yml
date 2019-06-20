@@ -4,48 +4,56 @@
 # - backend - to install backend
 # - frontend - to install frontend
 #
-- name: Load external variables from a file
-  include_vars:
-    file: demoapp_ansible_vars.yml
-  tags:
-    - always
+- name: Deploy/Undeploy Application Backend
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  become: false
+  environment:
+    AWS_SECRET_KEY: "{{ aws_secret_key }}"
+    AWS_ACCESS_KEY: "{{ aws_access_key }}"
 
-##
-## Install backend or/and frontend
-##
-- name: Install application
-  block:
+  tasks:
 
-    - import_tasks: install_backend.yml
-      vars:
-        base_dir: "../demoapp/"
-      tags: [ "backend" ]
-    - import_tasks: install_frontend.yml
-      tags: [ "frontend" ]
-    - meta: end_play
+    - name: Load external variables from a file
+      include_vars:
+        file: demoapp_ansible_vars.yml
+      tags:
+        - always
 
-  rescue:
+    ##
+    ## Install backend or/and frontend
+    ##
+    - name: Install application
+      block:
 
-    - import_tasks: uninstall_backend.yml
-      tags: [ "backend" ]
-    - import_tasks: uninstall_frontend.yml
-      tags: [ "frontend" ]
-    - meta: end_play
+        - import_tasks: install_backend.yml
+          vars:
+            base_dir: "../demoapp/"
+        - meta: end_play
 
-  when: do in [ "install" ]
+      rescue:
+
+        - import_tasks: uninstall_backend.yml
+          tags: [ "backend" ]
+        - meta: end_play
+
+      when: do in [ "install" ]
 
 
-##
-## Uninstall backend or/and frontend
-##
-- name: Uninstall application
-  block:
+    ##
+    ## Uninstall backend or/and frontend
+    ##
+    - name: Uninstall application backend
+      block:
 
-    - import_tasks: uninstall_backend.yml
-      tags: [ "backend" ]
-    - import_tasks: uninstall_frontend.yml
-      tags: [ "frontend" ]
-    - meta: end_play
+        - import_tasks: uninstall_backend.yml
+          tags: [ "backend" ]
+        - meta: end_play
 
-  when: do in [ "uninstall" ]
+      when: do in [ "uninstall" ]
+
+
+
+
 
