@@ -49,6 +49,14 @@
             success_msg: "EC2 instances are there"
 
 
+        - name: Deploy private key on the controller host
+          copy:
+            content: "{{ aws_ssh_priv_key }}"
+            dest: "{{ ec2_ssh_privkey_file }}"
+            mode: '0600'
+          no_log: true
+
+
         - name: Display Inventory hosts
           debug:
             msg: |
