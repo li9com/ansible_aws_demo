@@ -1,0 +1,104 @@
+- name: Deploy/Undeploy Application Backend
+  hosts: localhost,frontend
+  gather_facts: false
+  connection: local
+  become: false
+  environment:
+    AWS_SECRET_KEY: "{{ aws_secret_key }}"
+    AWS_ACCESS_KEY: "{{ aws_access_key }}"
+  vars:
+    l_app_vars_file: "{{ app_vars_file | default('demoapp/vars_demoapp.yml') }}"
+    l_infra_vars_file: "{{ infra_vars_file | default('infra/vars_aws-vpc.yml') }}"
+  tasks:
+
+
+    - name: Load external variables from a file
+      include_vars:
+        file: "{{ item }}"
+      tags:
+        - always
+      loop:
+        - "{{ l_app_vars_file }}"
+        - "{{ l_infra_vars_file }}"
+
+
+    - name: Working on AWS to get EC2 instances details
+      block:
+
+        - name: Search needed needed instances
+          ec2_instance_facts:
+            region: "{{ vpc.region }}"
+            filters:
+              "tag:appName": "{{ ec2_instance_tag_appname }}"
+          register: r_ec2_instances
+
+
+        - name: Add the EC2 instances to inventory
+          add_host:
+            name: "{{ item.public_dns_name }}"
+            groups: "{{ ec2_frontend_inventory_group_name }}"
+            ansible_ssh_host: "{{ item.public_dns_name }}"
+            ansible_user: "{{ ec2_user }}"
+          loop: "{{ r_ec2_instances.instances }}"
+
+
+        - name: Check that there is at least one host in the inventory group
+          assert:
+            that: r_ec2_instances.instances | length > 0
+            fail_msg: "No EC2 instances added"
+            success_msg: "EC2 instances are there"
+
+
+        - name: Display Inventory hosts
+          debug:
+            msg: |
+              {%- set host = hostvars[item] -%}
+              Host     : {{ host.inventory_hostname }}
+              SSH host : {{ host.ansible_user }}@{{ host.ansible_ssh_host }}
+          loop: "{{ groups[ec2_frontend_inventory_group_name] }}"
+
+      rescue:
+
+        - name: "Disaster block is called"
+          debug:
+            msg: "Something went wrong"
+
+      delegate_to: localhost
+      connection: local
+
+
+
+- name: Deploy/Undeploy Application Frontend
+  hosts: frontend
+  gather_facts: false
+  become: true
+  environment:
+    AWS_SECRET_KEY: "{{ aws_secret_key }}"
+    AWS_ACCESS_KEY: "{{ aws_access_key }}"
+  vars:
+    l_app_vars_file: "{{ app_vars_file | default('demoapp/vars_demoapp.yml') }}"
+    l_infra_vars_file: "{{ infra_vars_file | default('infra/vars_aws-vpc.yml') }}"
+  tasks:
+
+    - name: Running installation of Frontend
+      block:
+
+
+        - name: Install Epel-package
+          yum:
+            name: epel-release
+            state: present
+
+
+        - name: Install Nginx
+          yum:
+            name: nginx
+            state: present
+
+
+        - name: Start Nginx service
+          service:
+            name: nginx
+            enabled: true
+            state: started
+

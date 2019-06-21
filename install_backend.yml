@@ -1,0 +1,22 @@
+---
+##
+##
+- name: Install/Deinstall Backend
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  become: false
+  environment:
+    AWS_SECRET_KEY: "{{ aws_secret_key }}"
+    AWS_ACCESS_KEY: "{{ aws_access_key }}"
+  vars:
+    l_tasks_dir: "{{ tasks_dir | default('infra') }}"
+    l_tasks_file: "{{ tasks_file }}"
+    l_infra_vars_file: "{{ infra_vars_file }}"
+
+  tasks:
+
+
+    - name: Check that the tasks_file is provided
+      assert:
+        that:

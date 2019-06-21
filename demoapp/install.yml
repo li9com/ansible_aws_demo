@@ -15,9 +15,11 @@
 
   tasks:
 
+
+
     - name: Load external variables from a file
       include_vars:
-        file: demoapp_ansible_vars.yml
+        file: vars_demoapp.yml
       tags:
         - always
 
@@ -54,6 +56,73 @@
       when: do in [ "uninstall" ]
 
 
+##
+## It uses a different set of hosts
+## because it needs to go to the frontend hosts
+##
 
 
+- name: Deploy/Undeploy Application Frontend
+  hosts: frontend,localhost
+  gather_facts: false
+  become: false
+  environment:
+    AWS_SECRET_KEY: "{{ aws_secret_key }}"
+    AWS_ACCESS_KEY: "{{ aws_access_key }}"
+
+  tasks:
+
+
+    - name: Extend the inventory (in memory) with discovered hosts
+      block:
+
+        - name: Search needed needed instances
+          ec2_instance_facts:
+            region: "{{ vpc.region }}"
+            filters:
+              "tag:appName": "{{ ec2_instance_tag_appname }}"
+          register: ec2_instances
+
+      delegate_to: localhost
+      connection: local
+
+
+    - name: Load external variables from a file
+      include_vars:
+        file: vars_demoapp.yml
+      tags:
+        - always
+
+    ##
+    ## Install backend or/and frontend
+    ##
+    - name: Install application
+      block:
+
+        - import_tasks: install_frontend.yml
+          vars:
+            base_dir: "../demoapp/"
+          tags: [ "frontend" ]
+        - meta: end_play
+
+      rescue:
+
+        - import_tasks: uninstall_frontend.yml
+          tags: [ "frontend" ]
+        - meta: end_play
+
+      when: do in [ "install" ]
+
+
+    ##
+    ## Uninstall backend or/and frontend
+    ##
+    - name: Uninstall application frontend
+      block:
+
+        - import_tasks: uninstall_frontend.yml
+          tags: [ "backend" ]
+        - meta: end_play
+
+      when: do in [ "uninstall" ]
 
