@@ -49,7 +49,7 @@
     path: "{{ base_dir }}{{ item.value.local_source }}"
     dest: "{{ base_dir }}{{ item.value.local_source }}.{{ item.value.format }}"
     format: "{{ item.value.format }}"
-    force_archive: true
+    force: true
   loop: "{{ lookup('dict', aws_api_gateway.methods) }}"
   delegate_to: localhost
 
