@@ -30,6 +30,7 @@
             region: "{{ vpc.region }}"
             filters:
               "tag:appName": "{{ ec2_instance_tag_appname }}"
+              "instance-state-name": "running"
           register: r_ec2_instances
 
 
