@@ -55,7 +55,7 @@
             content: "{{ aws_ssh_priv_key }}"
             dest: "{{ ec2_ssh_privkey_file }}"
             mode: '0600'
-          no_log: true
+          # no_log: true
 
 
         - name: Display Inventory hosts
