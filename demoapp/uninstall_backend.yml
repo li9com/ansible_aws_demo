@@ -33,8 +33,6 @@
 
 
 - name: Delete API Gateway (using a cloudformation template)
-  vars:
-    lambda_funcs: "{{ lambda_data }}"
   cloudformation:
     capabilities:
       - CAPABILITY_IAM
