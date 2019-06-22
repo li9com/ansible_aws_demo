@@ -38,5 +38,5 @@
       - CAPABILITY_IAM
     region: "{{ aws_region }}"
     stack_name: "{{ aws_api_gateway.cfn_stack_name }}"
-    state: present
+    state: absent
 
