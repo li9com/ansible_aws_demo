@@ -1,5 +1,8 @@
 ---
 ##
+## Installs the DemoApp's backend
+## Requires:
+## - encrypted aws credentials
 ##
 - name: Install/Deinstall Backend
   hosts: localhost
@@ -10,13 +13,52 @@
     AWS_SECRET_KEY: "{{ aws_secret_key }}"
     AWS_ACCESS_KEY: "{{ aws_access_key }}"
   vars:
-    l_tasks_dir: "{{ tasks_dir | default('infra') }}"
-    l_tasks_file: "{{ tasks_file }}"
-    l_infra_vars_file: "{{ infra_vars_file }}"
-
+    l_tasks_dir: "{{ tasks_dir | default('demoapp') }}"
+    l_infra_vars_file: "{{ infra_vars_file | default('infra/vars_aws-vpc.yml') }}"
+    l_app_vars_file: "{{ l_tasks_dir }}/{{ app_vars_file | default('vars_demoapp.yml') }}"
+    l_tasks_install: "install_backend.yml"
+    l_tasks_uninstall: "uninstall_backend.yml"
+    aws_region: "{{ vpc.region }}"
+    base_dir: "{{ l_tasks_dir }}/"
   tasks:
 
 
-    - name: Check that the tasks_file is provided
-      assert:
-        that:
+    - name: Select install tasks file
+      set_fact:
+        l_tasks_file: "{{ l_tasks_install }}"
+      tags:
+        - never
+        - install
+
+
+    - name: Select install tasks file
+      set_fact:
+        l_tasks_file: "{{ l_tasks_uninstall }}"
+      tags:
+        - never
+        - uninstall
+
+
+    - name: Load vars from file(s)
+      include_vars:
+        file: "{{ item }}"
+      loop:
+        - "{{ l_infra_vars_file }}"
+        - "{{ l_app_vars_file }}"
+      tags:
+        - always
+
+
+    - name: Include Install tasks
+      import_tasks: "{{ l_tasks_dir }}/install_backend.yml"
+      tags:
+        - never
+        - install
+
+
+    - name: Include Uninstall tasks
+      import_tasks: "{{ l_tasks_dir }}/uninstall_backend.yml"
+      tags:
+        - never
+        - uninstall
+
