@@ -10,12 +10,14 @@
   iam_role:
     name: "{{ iam_role.name }}"
     state: absent
+    region: "{{ aws_region }}"
 
 
 - name: Delete Lambda function(s)
   lambda:
     state: absent
     name: "{{ item.value.name }}"
+    region: "{{ aws_region }}"
   loop: "{{ lookup('dict', aws_api_gateway.methods) }}"
 
 
@@ -26,6 +28,7 @@
     principal: "apigateway.amazonaws.com"
     statement_id: allow-api-gateway
     state: absent
+    region: "{{ aws_region }}"
   loop: "{{ lookup('dict', aws_api_gateway.methods) }}"
 
 
