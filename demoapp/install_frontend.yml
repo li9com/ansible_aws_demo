@@ -1,53 +1,95 @@
 ---
-#
-# Tasks install the backend application
-#
-- name: Define a name of EC2 group
-  set_fact:
-    ec2_groupname: "{{ ec2_frontend_inventory_group_name }}"
+##
+## Tasks install the frontend
+## These tasks are executed on group['frontend'] inventory group of hosts
+##
+- name: Install some needed package(s)
+  yum:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - python2-pip
+    - net-tools
 
 
-- name: Get a list of EC2 intances deployed within the infra
-  ec2_instance_facts:
-    region: "{{ aws_region }}"
-    filters:
-      "tag:appName": "{{ ec2_instance_tag_appname }}"
-      "instance-state-name": "running"
-  register: ec2_instances
+
+- name: Copy sources to the destination
+  synchronize:
+    src: "{{ l_tasks_dir }}/frontend"
+    dest: /opt
 
 
-- name: Make sure that we have found EC2 instances
-  assert:
-    that: ec2_instances.instances | length > 0
-    fail_msg: "Not found EC2 instances. Cannot install frontend"
-    success_msg: "Found {{ ec2_instances.instances | length }} EC2 instances"
+
+- name: Bootstrap python virtual environment
+  shell: |
+    cd {{ l_app_dir }}
+    source venv/bin/activate
+    pip2 install -r requirements.txt
 
 
-- name:
-  debug:
-    var: ec2_instances
+- name: Install stopapp.sh, startapp.sh, and other files
+  copy:
+    content: "{{ item.content }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode | default('0644') }}"
+  loop:
+    - content: |
+        #!/bin/bash
+        cd {{ l_app_dir }}
+        source venv/bin/activate
+        exec flask run -p 80 -h 0.0.0.0
+      dest: "{{ l_app_dir }}/startapp.sh"
+      mode: "0755"
+    - content: |
+        #!/bin/bash
+        pid=`netstat -tunlp | awk '/0.0.0.0:80/{print $7}' | cut -d '/' -f1`
+        if [ -n "$pid" ]; then
+          kill -9 $pid
+        fi
+      dest: "{{ l_app_dir }}/stopapp.sh"
+      mode: "0755"
+    - content: |+
+        {
+          "get_item": "{{ l_api_endpoint_url }}",
+          "add_item": "{{ l_api_endpoint_url }}",
+          "del_item": "{{ l_api_endpoint_url }}",
+          "mod_item": "{{ l_api_endpoint_url }}"
+        }
+      dest: "{{ l_app_dir }}/endpoints.json"
+      mode: "0644"
+  register: supervisord_conf
 
 
-- name: Add found EC2 instances into inventory
-  add_host:
-    groups: "{{ ec2_groupname }}"
-    name: "{{ item.public_dns_name }}"
-    ansible_host: "{{ item.public_ip_address }}"
-    ansible_ssh_user: "{{ ec2_user }}"
-    ansible_ssh_private_key_file: "{{ ec2_ssh_privkey_file }}"
-  loop: "{{ ec2_instances.instances }}"
+- name: Create a SystemD unit
+  copy:
+    content: |
+      [Unit]
+      Description=DemoApp Frontend
+
+      [Service]
+      Type=Working
+      ExecStart={{ l_app_dir }}/startapp.sh
+      ExecStop={{ l_app_dir }}/stopapp.sh
+      Restart=Always
+
+      [Install]
+      WantedBy=default.target
+    dest: /etc/systemd/system/frontend.service
+    mode: "0644"
+  register: unit_file
 
 
-- name: Hosts in the inventory
-  debug:
-    var: groups[ec2_groupname]
+- name: Make sure systemd daemon
+  service:
+    name: frontend.service
+    daemon_reload: true
+    enabled: true
+    state: started
 
 
-- name: Ping the EC2 hosts
-  ping:
-  when: inventory_hostname in groups[ec2_groupname]
-  connection: ssh
-
-
-- meta: end_play
+- name: Reload systemd daemon
+  service:
+    name: frontend.service
+    state: restarted
+  when: unit_file is changed
 

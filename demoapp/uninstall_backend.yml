@@ -40,3 +40,9 @@
     stack_name: "{{ aws_api_gateway.cfn_stack_name }}"
     state: absent
 
+
+- name: Delete api_endpoint file
+  file:
+    path: "{{ api_endpoint_local_file }}"
+    state: absent
+

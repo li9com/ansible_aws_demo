@@ -114,13 +114,15 @@
     state: present
     template_body: "{{ lookup('template', '{{ aws_api_gateway.template }}') }}"
   register: api_gateway
-  tags:
-    - summary
 
 
 - name: Display api_info
   debug:
     var: api_gateway.stack_outputs.APIEndPointURL
-  tags:
-    - summary
+
+
+- name: Save API_Gateway endpoint on a local drive
+  copy:
+    content: "{{ api_gateway.stack_outputs.APIEndPointURL }}"
+    dest: "{{ api_endpoint_local_file }}"
 

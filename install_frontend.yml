@@ -7,7 +7,8 @@
     AWS_SECRET_KEY: "{{ aws_secret_key }}"
     AWS_ACCESS_KEY: "{{ aws_access_key }}"
   vars:
-    l_app_vars_file: "{{ app_vars_file | default('demoapp/vars_demoapp.yml') }}"
+    l_tasks_dir: "{{ tasks_dir | default('demoapp') }}"
+    l_app_vars_file: "{{ l_tasks_dir }}/{{ app_vars_file | default('vars_demoapp.yml') }}"
     l_infra_vars_file: "{{ infra_vars_file | default('infra/vars_aws-vpc.yml') }}"
   tasks:
 
@@ -23,6 +24,8 @@
 
 
     - name: Working on AWS to get EC2 instances details
+      tags:
+        - always
       block:
 
         - name: Search needed needed instances
@@ -87,29 +90,29 @@
     AWS_SECRET_KEY: "{{ aws_secret_key }}"
     AWS_ACCESS_KEY: "{{ aws_access_key }}"
   vars:
-    l_app_vars_file: "{{ app_vars_file | default('demoapp/vars_demoapp.yml') }}"
+    l_tasks_dir: "{{ tasks_dir | default('demoapp') }}"
+    l_app_vars_file: "{{ l_tasks_dir }}/{{ app_vars_file | default('vars_demoapp.yml') }}"
     l_infra_vars_file: "{{ infra_vars_file | default('infra/vars_aws-vpc.yml') }}"
+    l_app_dir: "/opt/frontend"
+    l_api_endpoint_url: "{{ lookup('file', api_endpoint_local_file) }}"
   tasks:
 
     - name: Running installation of Frontend
+      tags:
+        - install
       block:
 
 
-        - name: Install Epel-package
-          yum:
-            name: epel-release
-            state: present
+        - name: Load external variables from a file
+          include_vars:
+            file: "{{ item }}"
+          tags:
+            - always
+          loop:
+            - "{{ l_app_vars_file }}"
+            - "{{ l_infra_vars_file }}"
 
 
-        - name: Install Nginx
-          yum:
-            name: nginx
-            state: present
-
-
-        - name: Start Nginx service
-          service:
-            name: nginx
-            enabled: true
-            state: started
+        - name: Include install_frontend tasks
+          import_tasks: "{{ l_tasks_dir }}/install_frontend.yml"
 
