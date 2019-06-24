@@ -1,0 +1,30 @@
+{% extends "main.html.j2" %}
+
+{% block content %}
+<form action="/add-post" method="POST" novalidate>
+  {{ form.hidden_tag() }}
+  <p>
+    {{ form.token.label }}</br>
+    {{ form.token(size=32) }}
+  </p>
+  <p>
+    {{ form.initiator_email.label }}</br>
+    {{ form.initiator_email(size=32) }}
+  </p>
+  <p>
+    {{ form.participant_email.label }}</br>
+    {{ form.participant_email(size=32) }}
+  </p>
+  <p>
+    {{ form.participant_refid.label }}</br>
+    {{ form.participant_refid(size=32) }}
+  </p>
+  <p>
+    {{ form.exam_name.label }}</br>
+    {{ form.exam_name() }}
+  </p>
+  <p>
+    {{ form.submit() }}
+  </p>
+</form>
+{% endblock %}

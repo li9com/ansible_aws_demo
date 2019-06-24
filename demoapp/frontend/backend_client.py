@@ -45,14 +45,21 @@ class BackendClient:
 
     elif action == 'add_item':
       payload['data'] = kwargs.get('data', {})
+      print("Passed data", kwargs.get('data', {}))
       response = R.post(
         self.endpoint(action),
         headers = headers,
-        data = payload
+        data = kwargs.get('data', {})
       )
 
       if response.status_code in self.good_response_codes:
         result = response.json()
+        if result.get('ResponseMetadata', {}).get('HTTPStatusCode', 0) in [ 200, ]:
+          return True
+      else:
+        print("Somethng went wrong")
+        print(response.text)
+        return False
       pass
     elif action == 'del_item':
       pass
@@ -63,7 +70,7 @@ class BackendClient:
     return result
 
 def get_item(token): return BackendClient().makeAPICall(action='get_item', token=token)
-def add_item(data): return BackendClient().makeAPICall(action='add_item')
+def add_item(data): return BackendClient().makeAPICall(action='add_item', data=data)
 
 
 if __name__ == "__main__":
