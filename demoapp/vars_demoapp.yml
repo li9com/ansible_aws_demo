@@ -49,5 +49,5 @@ aws_api_gateway:
     POST: *lambda_add_item
 #    PATCH: {}
 #    DELETE: {}
-api_endpoint_local_file: "/tmp/api_endpoint.url"
+api_endpoint_local_file: "./api_endpoint.url"
 
