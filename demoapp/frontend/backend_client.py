@@ -34,14 +34,17 @@ class BackendClient:
     payload = {}
     if action == 'get_item':
       print("Accepted parameter", kwargs.get('token', ''))
+      url = self.endpoint(action) + '?token=' + kwargs.get('token','')
+      print("Calling URL: ", url)
       response = R.get(
-        self.endpoint(action) + '?token=' + kwargs.get('token',''),
-        headers = headers,
-        data = payload
+        url
       )
       print(response)
       if response.status_code in self.good_response_codes:
         result = response.json()
+        return result
+      else:
+        return False
 
     elif action == 'add_item':
       payload['data'] = kwargs.get('data', {})

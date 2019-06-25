@@ -6,7 +6,7 @@ from flask import request
 from flask import render_template
 from datetime import datetime
 
-from forms import AddItemForm
+from forms import AddItemForm, GetItemForm
 
 from backend_client import get_item, add_item
 
@@ -38,6 +38,21 @@ def page_welcome():
 def page_add():
   form = AddItemForm()
   return render_template('subpage-add.html.j2', title='Add record', form=form)
+
+
+@app.route("/get", methods=[ 'GET', ])
+def page_get():
+  form = GetItemForm()
+  return render_template('subpage-get.html.j2', title='Get record', form=form)
+
+
+@app.route("/get-post", methods=[ 'POST', ])
+def page_get_handler():
+  form = GetItemForm()
+  if form.validate_on_submit():
+    token = form.token.data
+    backend_response = get_item(token=token)
+  return render_template('subpage-display-record.html.j2', title='Display record ' + token, form=form, result=backend_response)
 
 
 @app.route("/add-post", methods=[ 'POST', ])

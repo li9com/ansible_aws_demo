@@ -1,0 +1,14 @@
+{% extends "main.html.j2" %}
+
+{% block content %}
+<form action="/get-post" method="POST" novalidate>
+  {{ form.hidden_tag() }}
+  <p>
+    {{ form.token.label }}</br>
+    {{ form.token(size=32) }}
+  </p>
+  <p>
+    {{ form.submit() }}
+  </p>
+</form>
+{% endblock %}

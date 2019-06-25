@@ -18,3 +18,9 @@ class AddItemForm(FlaskForm):
   exam_name = SelectField('Exam name', choices=exams)
   submit = SubmitField('Submit record')
 
+
+class GetItemForm(FlaskForm):
+  token = StringField('Enter token', validators=[ DataRequired() ])
+  submit = SubmitField('Retrieve record')
+  pass
+
