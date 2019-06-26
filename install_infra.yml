@@ -20,7 +20,7 @@
   vars:
     l_tasks_dir: "{{ tasks_dir | default('infra') }}"
     l_tasks_file: "{{ tasks_file }}"
-    l_infra_vars_file: "{{ infra_vars_file }}"
+    l_infra_vars_file: "{{ infra_vars_file | default(l_tasks_dir + '/vars_aws-vpc.yml')}}"
 
   tasks:
 
@@ -29,7 +29,7 @@
       assert:
         that:
           - tasks_file is defined
-          - infra_vars_file is defined
+          - l_infra_vars_file is defined
         fail_msg: "Tasks file and Infra vars file must be provided"
         success_msg: |
           Provided tasks file is {{ l_tasks_file }}, tasks dir is {{ l_tasks_dir }}. Infra vars file is {{ l_infra_vars_file }}.

@@ -33,7 +33,7 @@ Resources:
                   schema:
                     "$ref": "#/definitions/Empty"
               x-amazon-apigateway-integration:
-                uri: "arn:aws:apigateway:{{ aws_region }}:lambda:path/2015-03-31/functions/{{ lambda.arn.split(':',1)[0] }}/invocations"
+                uri: "arn:aws:apigateway:{{ aws_region }}:lambda:path/2015-03-31/functions/{{ lambda.arn.split(':',6) | join(':') }}/invocations"
                 responses:
                   default:
                     statusCode: '200'

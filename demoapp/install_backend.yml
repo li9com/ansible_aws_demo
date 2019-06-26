@@ -103,6 +103,16 @@
     var: aws_api_gateway.methods.keys()
 
 
+
+- name: Save cfn template on a local disk (using a cloudformation template)
+  vars:
+    lambda_funcs: "{{ lambda_data }}"
+  template:
+    src: "{{ aws_api_gateway.template }}"
+    dest: /tmp/rendered_stack.cfn.json
+
+
+
 - name: Create API Gateway (using a cloudformation template)
   vars:
     lambda_funcs: "{{ lambda_data }}"
