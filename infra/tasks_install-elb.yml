@@ -57,3 +57,8 @@
     security_groups: "{{ vpc.network.security_group.name }}"
     wait: true
 
+
+
+- name: Include more tasks to display summary
+  include_tasks: "tasks_install-summary.yml"
+

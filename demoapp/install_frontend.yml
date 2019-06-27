@@ -3,6 +3,12 @@
 ## Tasks install the frontend
 ## These tasks are executed on group['frontend'] inventory group of hosts
 ##
+- name: Install epel-release package
+  yum:
+    name: epel-release
+    state: present
+
+
 - name: Install some needed package(s)
   yum:
     name: "{{ item }}"
@@ -20,10 +26,10 @@
     dest: /opt
 
 
-
 - name: Bootstrap python virtual environment
   shell: |
     cd {{ l_app_dir }}
+    virtualenv venv
     source venv/bin/activate
     pip2 install -r requirements.txt
 
@@ -37,7 +43,6 @@
     - content: |
         #!/bin/bash
         cd {{ l_app_dir }}
-        virtualenv venv
         source venv/bin/activate
         exec flask run -p 80 -h 0.0.0.0
       dest: "{{ l_app_dir }}/startapp.sh"
