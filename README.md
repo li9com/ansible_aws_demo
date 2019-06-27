@@ -2,7 +2,7 @@
 
 A set of playbooks to demo Ansible for AWS. The demo app uses *AWS Lambda* and *DynamoDB*.
 
-This demo utilizes Ansible to deploy from zero to all-running state an application in AWS.
+This demo utilizes Ansible to deploy from zero to all-run state an application in AWS.
 
 
 ## Structure
