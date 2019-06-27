@@ -10,6 +10,7 @@
   loop:
     - python2-pip
     - net-tools
+    - python-virtualenv
 
 
 
@@ -36,6 +37,7 @@
     - content: |
         #!/bin/bash
         cd {{ l_app_dir }}
+        virtualenv venv
         source venv/bin/activate
         exec flask run -p 80 -h 0.0.0.0
       dest: "{{ l_app_dir }}/startapp.sh"
