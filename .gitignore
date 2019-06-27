@@ -3,3 +3,5 @@
 **/*.zip
 **/*.DS_Store
 rendered_stack.cfn.json
+api_endpoint.url
+
