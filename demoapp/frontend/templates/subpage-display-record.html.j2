@@ -1,10 +1,8 @@
 {% extends "main.html.j2" %}
-{% if result == False %}
-{% block message %}
-<h3>No such record found or something went wrong</h3>
-{% endblock %}
-{% else %}
+{% if data %}
 {% block content %}
-{{ form }}
+<p>
+{{ data }}
+</p>
 {% endblock %}
 {% endif %}

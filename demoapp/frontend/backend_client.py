@@ -41,8 +41,7 @@ class BackendClient:
       )
       print(response)
       if response.status_code in self.good_response_codes:
-        result = response.json()
-        return result
+        return response.json()
       else:
         return False
 

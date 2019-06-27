@@ -49,10 +49,13 @@ def page_get():
 @app.route("/get-post", methods=[ 'POST', ])
 def page_get_handler():
   form = GetItemForm()
+  data = "No data found or something went wrong"
   if form.validate_on_submit():
     token = form.token.data
     backend_response = get_item(token=token)
-  return render_template('subpage-display-record.html.j2', title='Display record ' + token, form=form, result=backend_response)
+    if backend_response.get('Item', False):
+      data = json.dumps(backend_response.get('Item'))
+  return render_template('subpage-display-record.html.j2', title='Display record ' + token, data=data)
 
 
 @app.route("/add-post", methods=[ 'POST', ])

@@ -24,6 +24,7 @@
   synchronize:
     src: "{{ l_tasks_dir }}/frontend"
     dest: /opt
+  register: app
 
 
 - name: Bootstrap python virtual environment
@@ -98,5 +99,6 @@
   service:
     name: frontend.service
     state: restarted
-  when: unit_file is changed
+  when:
+  - unit_file is changed or app is changed
 
