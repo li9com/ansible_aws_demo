@@ -7,63 +7,85 @@ This demo utilizes Ansible to deploy from zero to all-running state an applicati
 
 ## Structure
 
-There are two directories on top:
- * `demo_1` - includes ansible playbooks and configuration for deployment of infra
- * `demoapp` - includes source code and playbooks to deploy frontend and backend of app.
+There are two important directories on top:
+ * `infra` - includes ansible playbooks and configuration for deployment of infra
+ * `demoapp` - includes source code and playbooks to deploy the frontend and the backend of the demo application.
 
 
-## Infra
+## Provisioning of Infrastructure
 
-Go to `/demo_1` directory. There is a bunch of task files named as `task_install-*` and `task_uninstall-*`. Every of them does only a small part of the whole job. These task files are not playbooks and cannot be run separately. (See `install.yml` for this).
+This process is split up into three task books. Each of them configures a small part of the infrastructure. These books are located in the `infra` directory.
 
+- `tasks_install-network.yml` - configures VPC, network, subnet, security group
+- `tasks_install-ec2.yml` - deploys EC2 instances
+- `tasks_install-elb.yml` - configures a load balancer
 
-There is a config file `vars_aws-vpc.yml` which describes the configuration of an infrastrcture for orchestrating.
-
-There is a playbook `install.yml` which should be run to install and uninstall infra, and, also to install and uninstall the demo application.
-
-
-### Using install.yml playbook
-
-To run this playbook you need to provde `aws_secret_key` and `aws_access_key` environment variables. Or they being searched in the file `~/.aws/credentials`.
-
-The playbook can be run by following ways:
-
-  - install infra:
-  `ansible-playbook install.yml -e do=install -e scope=infra`
-
-  - install demo app:
-    `ansible-playbook install.yml -e do=install -e scope=app --tags backend,frontend`
-
-  - uninstall infra:
-  `ansible-playbook install.yml -e do=uninstall -e scope=infra`
-
-  - uninstall demo app:
-    `ansible-playbook install.yml -e do=uninstall -e scope=app --tags backend,frontend`
-
-  - additionally, you can get some details to access the deployed infrastructure:
-    `ansible-playbook install.yml -e do=install -e scope=infra --tags summary`
+The provisioning is done in the above order. Uninstallation is done in the reverse order.
 
 
-  In case if during process `do=install` an error happens, the playbook automatically runs `do=uninstall` actions.
+### Commands to run (staying at the top, root directory)
 
-  **Note:**
-  So far the demo app can be deployed without provisioning an infrastructure. Up now it has only **backend** component implemented which works entirely on *AWS Lambda* functions and *AWS DynamoDB*.
+- **Network**
+
+  ```shell
+  # Installation
+  ansible-playbook install_infra.yml -e tasks_file=tasks_install-network.yml --ask-vault-pass
+  # Uninstallation
+  ansible-playbook install_infra.yml -e tasks_file=tasks_uninstall-network.yml --ask-vault-pass
+  ```
+
+- **EC2 instances**
+
+  ```shell
+  # Installation
+  ansible-playbook install_infra.yml -e tasks_file=tasks_install-ec2.yml --ask-vault-pass
+  # Uninstallation
+  ansible-playbook install_infra.yml -e tasks_file=tasks_uninstall-ec2.yml --ask-vault-pass
+  ```
+
+- **Load Balancer**
+
+  ```shell
+  # Installation
+  ansible-playbook install_infra.yml -e tasks_file=tasks_install-elb.yml --ask-vault-pass
+  # Uninstallation
+  ansible-playbook install_infra.yml -e tasks_file=tasks_uninstall-elb.yml --ask-vault-pass
+  ```
+
+Here I use option `--ask-vault-pass` because the file `group_vars/all/aws-secrets.yml` includes the AWS secret and access keys. You may put these in the environment variables and don't use the options at all. For this also make sure you have commented in the **environment** section in `install_infra.yml` playbook.
 
 
-### Deployment
+## Provisioning of Backend
 
-There is a two-step process to get all run.
+To deploy the Backend run this playbook
 
-  - deployment of instrastructure
-  - intalling the demo application
+```shell
+ansible-playbook install_backend.yml -t install --ask-vault-pass
+```
+
+We use here the tag *-t install* to specify to only install the Backend. When we need to uninstall the Backend we run the same playbook, but now we provide tag *-t uninstall*. These two tags should not be used at the same time.
+
+```shell
+ansible-playbook install_backend.yml -t uninstall --ask-vault-pass
+```
 
 
-## Backend
 
-Implemented on *AWS Lambda* functions, persistent data is stored in *AWS DynamoDB*.
+## Provisioning of Frontend
 
+To deploy the Frontend run this playbook
 
-## Frontend
+```shell
+ansible-playbook install_frontend.yml -t install --ask-vault-pass
+```
 
-So far frontend is not ready yet.
+We use here the tag *-t install* to specify to only install the Frontend. When we need to uninstall the Frontend we run the same playbook, but now we provide tag *-t uninstall*. These two tags should not be used at the same time.
+
+```shell
+ansible-playbook install_frontend.yml -t uninstall --ask-vault-pass
+```
+
+## Authors
+
+- Dmitrii Mostovshchikov @ Li9, Inc., Dmitrii.Mostovshchikov@li9.com.
 
