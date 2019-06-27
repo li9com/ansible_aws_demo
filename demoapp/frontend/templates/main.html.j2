@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>{% block title %}{% endblock %}}</title>
+    <title>{{ title | default('Demo Application') }}</title>
   </head>
 <body>
 <a href="/add">Add record</a> | <a href="/get">Get record</a>
